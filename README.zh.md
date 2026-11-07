@@ -2,13 +2,19 @@
 
 > **本仓库是个人 fork**，基于上游 [zarazhangrui/lark-coding-agent-bridge](https://github.com/zarazhangrui/lark-coding-agent-bridge) `0.7.1`（commit `5898681`）。
 > 改动见 [CHANGELOG.md](./CHANGELOG.md)。核心变化：`/stop` 只中断当前轮并保留排队消息，`/stop all` 才清空队列。
-> 原项目作者：Zara Zhang（[@zarazhangrui](https://github.com/zarazhangrui)），MIT License。
+> 原项目作者：张咋啦（Zara Zhang）（[@zarazhangrui](https://github.com/zarazhangrui)），MIT License。
 
 把飞书 / Lark 消息和本地 Claude Code 或 Codex CLI 打通的轻量 bot。用一条命令启动，扫码绑定 PersonalAgent 应用，然后在飞书里和本机编程助手对话，让它读图、处理文件、改代码。
 
 [English README](./README.md)
 
 关于能实现的效果，详情可以阅读[飞书文档](https://larkcommunity.feishu.cn/docx/OaRIdFIRFoLM3xxTmKwcetHqn5e)
+
+## Agent 接入
+
+- **Claude Code（CC）**：内置支持。安装并登录 `claude` 后，使用 `--agent claude` 创建独立 profile。
+- **OpenAI Codex**：内置支持。安装并登录 `codex` 后，使用 `--agent codex` 创建独立 profile。
+- **DeepSeek Harness（DSH）**：已在本地通过 Codex CLI 协议适配层接入。公开安装包只包含 Bridge，使用 DSH 还需另行安装 DeepSeek Harness 和兼容适配器，并将独立 profile 的 `codex.binaryPath` 指向适配器。
 
 ## 主要功能
 

@@ -2,13 +2,19 @@
 
 > **This is a personal fork** of [zarazhangrui/lark-coding-agent-bridge](https://github.com/zarazhangrui/lark-coding-agent-bridge), based on `0.7.1` (commit `5898681`).
 > See [CHANGELOG.md](./CHANGELOG.md) for changes. Key difference: `/stop` only interrupts the current run and keeps queued messages; `/stop all` clears the queue.
-> Original project by Zara Zhang ([@zarazhangrui](https://github.com/zarazhangrui)), MIT License.
+> Original project by Zara Zhang (张咋啦) ([@zarazhangrui](https://github.com/zarazhangrui)), MIT License.
 
 A lightweight bot that bridges Feishu / Lark messenger with your local Claude Code or Codex CLI. Run one command, scan a QR code to bind a PersonalAgent app, and talk to your local coding agent from chat.
 
 [中文 README](./README.zh.md)
 
 For a product walkthrough, see the [Feishu document](https://larkcommunity.feishu.cn/docx/OaRIdFIRFoLM3xxTmKwcetHqn5e).
+
+## Agent integrations
+
+- **Claude Code (CC)**: built in. Install and sign in to `claude`, then create a separate profile with `--agent claude`.
+- **OpenAI Codex**: built in. Install and sign in to `codex`, then create a separate profile with `--agent codex`.
+- **DeepSeek Harness (DSH)**: tested locally through a Codex CLI protocol adapter. The public package contains the Bridge. DSH requires a separate DeepSeek Harness installation and compatible adapter. Set `codex.binaryPath` in a separate profile to the adapter executable.
 
 ## What it does
 
