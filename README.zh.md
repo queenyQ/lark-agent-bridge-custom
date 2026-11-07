@@ -1,4 +1,4 @@
-# lark-channel-bridge
+# Lark Agent Bridge · queenyQ Custom
 
 > **本仓库是个人 fork**，基于上游 [zarazhangrui/lark-coding-agent-bridge](https://github.com/zarazhangrui/lark-coding-agent-bridge) `0.7.1`（commit `5898681`）。
 > 改动见 [CHANGELOG.md](./CHANGELOG.md)。核心变化：`/stop` 只中断当前轮并保留排队消息，`/stop all` 才清空队列。
@@ -37,11 +37,13 @@
 
 ## 安装
 
-从本仓库的 GitHub Releases 下载 `lark-channel-bridge-0.7.1-custom.1.tgz`，在下载目录执行下面的命令。从源码构建时，使用 Node.js 22.12+ 和 pnpm 10.33.0，然后运行 `pnpm install --frozen-lockfile` 和 `node dist/cli.js --help`。
+从本仓库的 GitHub Releases 下载 `lark-agent-bridge-custom-0.7.1-custom.1.tgz`，在下载目录执行下面的命令。从源码构建时，使用 Node.js 22.12+ 和 pnpm 10.33.0，然后运行 `pnpm install --frozen-lockfile` 和 `node dist/cli.js --help`。
 
 ```bash
-npm install --global ./lark-channel-bridge-0.7.1-custom.1.tgz
+npm install --global ./lark-agent-bridge-custom-0.7.1-custom.1.tgz
 ```
+
+安装后的终端命令仍是 `lark-channel-bridge`。本版和上游版共用命令名，请勿安装到同一个 npm 全局前缀。
 
 ## 首次启动
 
@@ -346,7 +348,7 @@ LARK_CHANNEL_TELEMETRY_MODULE=your-telemetry-package lark-channel-bridge start
 该模块会收到每一条 `log.*` 事件，以及错误 / 指标钩子，转发到任何你想要的地方。接口从包根导出：
 
 ```ts
-import type { AdapterFactory, TelemetryAdapter, TelemetryEvent } from 'lark-channel-bridge';
+import type { AdapterFactory, TelemetryAdapter, TelemetryEvent } from 'lark-agent-bridge-custom';
 
 const createAdapter: AdapterFactory = (meta) => ({
   emit(event) {/* 上报事件 */},

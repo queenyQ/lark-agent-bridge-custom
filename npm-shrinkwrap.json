@@ -1,5 +1,5 @@
 {
-  "name": "lark-channel-bridge",
+  "name": "lark-agent-bridge-custom",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
@@ -21,7 +21,7 @@
       "engines": {
         "node": ">=20.12.0"
       },
-      "name": "lark-channel-bridge"
+      "name": "lark-agent-bridge-custom"
     },
     "node_modules/@clack/core": {
       "version": "1.5.1",

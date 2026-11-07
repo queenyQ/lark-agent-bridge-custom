@@ -1,4 +1,4 @@
-# lark-channel-bridge
+# Lark Agent Bridge · queenyQ Custom
 
 > **This is a personal fork** of [zarazhangrui/lark-coding-agent-bridge](https://github.com/zarazhangrui/lark-coding-agent-bridge), based on `0.7.1` (commit `5898681`).
 > See [CHANGELOG.md](./CHANGELOG.md) for changes. Key difference: `/stop` only interrupts the current run and keeps queued messages; `/stop all` clears the queue.
@@ -37,11 +37,13 @@ For a product walkthrough, see the [Feishu document](https://larkcommunity.feish
 
 ## Install
 
-Download the matching `lark-channel-bridge-0.7.1-custom.1.tgz` from this repository’s GitHub Releases and run the following in the download directory. To build from source, use Node.js 22.12+ and pnpm 10.33.0, then run `pnpm install --frozen-lockfile` and `node dist/cli.js --help`.
+Download the matching `lark-agent-bridge-custom-0.7.1-custom.1.tgz` from this repository’s GitHub Releases and run the following in the download directory. To build from source, use Node.js 22.12+ and pnpm 10.33.0, then run `pnpm install --frozen-lockfile` and `node dist/cli.js --help`.
 
 ```bash
-npm install --global ./lark-channel-bridge-0.7.1-custom.1.tgz
+npm install --global ./lark-agent-bridge-custom-0.7.1-custom.1.tgz
 ```
+
+The installed command is still `lark-channel-bridge`. The custom and upstream packages share that command, so use separate npm prefixes if you need both.
 
 ## First run
 
@@ -346,7 +348,7 @@ LARK_CHANNEL_TELEMETRY_MODULE=your-telemetry-package lark-channel-bridge start
 That module receives every `log.*` event plus error/metric hooks and forwards them wherever you like. The interface is exported from the package root:
 
 ```ts
-import type { AdapterFactory, TelemetryAdapter, TelemetryEvent } from 'lark-channel-bridge';
+import type { AdapterFactory, TelemetryAdapter, TelemetryEvent } from 'lark-agent-bridge-custom';
 
 const createAdapter: AdapterFactory = (meta) => ({
   emit(event) {/* ship event */},
