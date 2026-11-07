@@ -376,6 +376,7 @@ export async function startChannel(deps: StartChannelDeps): Promise<BridgeChanne
       }).catch((err) => log.fail('cardAction', err));
     },
     comment: async (evt) => {
+      if (controls.profileConfig.comments.enableDocumentComments !== true) return;
       await withTrace({ chatId: 'comment' }, async () => {
         await handleCommentMention({
           channel,
@@ -778,8 +779,15 @@ async function intakeMessage(deps: IntakeDeps): Promise<void> {
     controls,
   });
   if (handled) {
-    const dropped = pending.cancel(scope);
-    log.info('intake', 'command', { scope, droppedPending: dropped.length });
+    const trimmedCmd = emsg.content.trim();
+    const isStop = /^\/stop(?:\s|$)/i.test(trimmedCmd);
+    const isStopAll = /^\/stop\s+all\s*$/i.test(trimmedCmd);
+    if (isStop && !isStopAll) {
+      log.info('intake', 'command', { scope, droppedPending: 0, keptPending: true });
+    } else {
+      const dropped = pending.cancel(scope);
+      log.info('intake', 'command', { scope, droppedPending: dropped.length });
+    }
     return;
   }
 

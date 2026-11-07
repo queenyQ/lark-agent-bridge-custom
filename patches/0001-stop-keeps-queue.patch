@@ -1,0 +1,40 @@
+--- a/dist/cli.js
++++ b/dist/cli.js
+@@ -10360,7 +10360,9 @@
+   return `${state} owner=${owner}${refreshed}`;
+ }
+ async function handleStop(args, ctx) {
+-  const targetScope = args.trim();
++  const raw = args.trim();
++  const stopAll = raw.toLowerCase() === "all";
++  const targetScope = stopAll ? "" : raw;
+   if (targetScope && !canRunAdminCommand(ctx.controls.profileConfig, ctx.controls, ctx.msg.senderId).ok) {
+     await reply(ctx, "\u274C \u6307\u5B9A scope \u505C\u6B62\u4EFB\u52A1\u4EC5\u7BA1\u7406\u5458\u53EF\u7528\u3002");
+     return;
+@@ -13309,7 +13311,7 @@
+     log.info("queue", "unblocked", { scope, queued: entry?.messages.length ?? 0 });
+     if (!entry || entry.messages.length === 0) return;
+     if (entry.timer) clearTimeout(entry.timer);
+-    entry.timer = this.armTimer(scope);
++    this.flush(scope);
+   }
+   armTimer(scope) {
+     return setTimeout(() => this.flush(scope), this.delayMs);
+@@ -14385,8 +14387,15 @@
+     controls
+   });
+   if (handled) {
+-    const dropped = pending.cancel(scope);
+-    log.info("intake", "command", { scope, droppedPending: dropped.length });
++    const trimmedCmd = emsg.content.trim();
++    const isStop = /^\/stop(?:\s|$)/i.test(trimmedCmd);
++    const isStopAll = /^\/stop\s+all\s*$/i.test(trimmedCmd);
++    if (isStop && !isStopAll) {
++      log.info("intake", "command", { scope, droppedPending: 0, keptPending: true });
++    } else {
++      const dropped = pending.cancel(scope);
++      log.info("intake", "command", { scope, droppedPending: dropped.length });
++    }
+     return;
+   }
+   const size = pending.push(scope, emsg);

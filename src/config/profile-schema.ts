@@ -60,7 +60,9 @@ export interface AttachmentConfig {
   cacheMaxBytes: number;
 }
 
-export type CommentConfig = Record<string, never>;
+export interface CommentConfig {
+  enableDocumentComments?: true;
+}
 
 /** Where the agent's answer goes when it responds to meeting content. */
 export type MeetingRespondIn = 'meeting' | 'im' | 'both';
@@ -391,7 +393,11 @@ function normalizeCodex(input: CodexConfig & { flags?: unknown }): CodexConfig {
   return codex;
 }
 
-function normalizeComments(_input: unknown): CommentConfig {
+function normalizeComments(input: unknown): CommentConfig {
+  if (input && typeof input === 'object' && 'enableDocumentComments' in input &&
+      input.enableDocumentComments === true) {
+    return { enableDocumentComments: true };
+  }
   return {};
 }
 

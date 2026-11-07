@@ -74,7 +74,7 @@ export class PendingQueue {
     log.info('queue', 'blocked', { scope, queued: entry?.messages.length ?? 0 });
   }
 
-  /** Resume the debounce timer; arms a fresh quiet window if anything queued. */
+  /** Resume processing; flushes immediately if anything queued. */
   unblock(scope: string): void {
     if (!this.blocked.has(scope)) return;
     this.blocked.delete(scope);
@@ -82,7 +82,7 @@ export class PendingQueue {
     log.info('queue', 'unblocked', { scope, queued: entry?.messages.length ?? 0 });
     if (!entry || entry.messages.length === 0) return;
     if (entry.timer) clearTimeout(entry.timer);
-    entry.timer = this.armTimer(scope);
+    this.flush(scope);
   }
 
   private armTimer(scope: string): NodeJS.Timeout {

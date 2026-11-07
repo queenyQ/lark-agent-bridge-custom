@@ -217,7 +217,10 @@ export async function resolveProfileRuntime(
     defaultWorkspace: appPaths.defaultWorkspaceDir,
     profileDir: appPaths.profileDir,
   });
-  const root = createRootConfig(profile, profileConfig, encrypted.secrets);
+  const root = markPermissionDefaultsMigration(
+    createRootConfig(profile, profileConfig, encrypted.secrets),
+    profile,
+  );
   await saveRootConfig(root, configPath);
   await writeActiveProfile(appPaths.rootDir, profile);
   console.log(`配置已保存到 ${configPath}\n`);

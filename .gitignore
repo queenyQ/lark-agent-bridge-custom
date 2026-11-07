@@ -22,3 +22,9 @@ web/dist/
 scripts/
 CHANGELOG.md
 tests-smoke/
+
+# This fork tracks its own changelog
+!CHANGELOG.md
+
+# Local bundle backups (not part of the fork)
+local-vendor/

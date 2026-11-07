@@ -97,7 +97,7 @@ function serializeProfileConfig(profile: ProfileConfig): StoredProfileConfig {
     permissions: profile.permissions,
     ...(profile.codex ? { codex: profile.codex } : {}),
     attachments: profile.attachments,
-    comments: {},
+    comments: profile.comments,
     meeting: profile.meeting,
     larkCli: profile.larkCli,
   };

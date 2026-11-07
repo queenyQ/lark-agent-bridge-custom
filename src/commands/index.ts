@@ -847,7 +847,9 @@ function formatOwnerState(ctx: CommandContext): string {
 }
 
 async function handleStop(args: string, ctx: CommandContext): Promise<void> {
-  const targetScope = args.trim();
+  const raw = args.trim();
+  const stopAll = raw.toLowerCase() === 'all';
+  const targetScope = stopAll ? '' : raw;
   if (targetScope && !canRunAdminCommand(ctx.controls.profileConfig, ctx.controls, ctx.msg.senderId).ok) {
     await reply(ctx, '❌ 指定 scope 停止任务仅管理员可用。');
     return;

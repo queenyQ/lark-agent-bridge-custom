@@ -44,9 +44,6 @@ describe('Claude IM regression boundaries', () => {
     expect(flushed).toEqual([]);
 
     queue.unblock('chat-1');
-    vi.advanceTimersByTime(599);
-    expect(flushed).toEqual([]);
-    vi.advanceTimersByTime(1);
 
     expect(flushed).toEqual([
       { scope: 'chat-1', batch: [msg('m-1', 'first'), msg('m-2', 'second')] },

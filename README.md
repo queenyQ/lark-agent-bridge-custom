@@ -1,5 +1,9 @@
 # lark-channel-bridge
 
+> **This is a personal fork** of [zarazhangrui/lark-coding-agent-bridge](https://github.com/zarazhangrui/lark-coding-agent-bridge), based on `0.7.1` (commit `5898681`).
+> See [CHANGELOG.md](./CHANGELOG.md) for changes. Key difference: `/stop` only interrupts the current run and keeps queued messages; `/stop all` clears the queue.
+> Original project by Zara Zhang ([@zarazhangrui](https://github.com/zarazhangrui)), MIT License.
+
 A lightweight bot that bridges Feishu / Lark messenger with your local Claude Code or Codex CLI. Run one command, scan a QR code to bind a PersonalAgent app, and talk to your local coding agent from chat.
 
 [中文 README](./README.zh.md)
@@ -12,7 +16,7 @@ For a product walkthrough, see the [Feishu document](https://larkcommunity.feish
 - **Streaming card**: text replies and tool calls update on one Lark card in real time.
 - **COT process messages**: optionally send a process message with agent progress text and tool calls, then send the final answer separately.
 - **Session continuity**: each chat, topic, or document comment thread keeps its own session.
-- **Queueing and batching**: messages sent in quick succession are handled together; messages sent during a run are queued for the next turn, while commands like `/new`, `/cd`, `/ws use`, and `/stop` can interrupt the current task.
+- **Queueing and batching**: messages sent in quick succession are handled together; messages sent during a run are queued for the next turn. Commands like `/new`, `/cd`, and `/ws use` interrupt the current task and clear the queue; `/stop` only interrupts the current run and keeps queued messages, while `/stop all` clears the queue.
 - **Multiple workspaces**: use `/cd` to switch the current project, and `/ws` to save and reuse common project directories.
 - **Images and files**: send them to the bot directly, and the bridge downloads them locally for the agent.
 - **Interactive cards**: `/help`, `/ws list`, and `/status` return cards with clickable buttons.
@@ -27,10 +31,10 @@ For a product walkthrough, see the [Feishu document](https://larkcommunity.feish
 
 ## Install
 
+Download the matching `lark-channel-bridge-0.7.1-custom.1.tgz` from this repository’s GitHub Releases and run the following in the download directory. To build from source, use Node.js 22.12+ and pnpm 10.33.0, then run `pnpm install --frozen-lockfile` and `node dist/cli.js --help`.
+
 ```bash
-npm i -g lark-channel-bridge
-# or
-pnpm add -g lark-channel-bridge
+npm install --global ./lark-channel-bridge-0.7.1-custom.1.tgz
 ```
 
 ## First run
@@ -159,7 +163,7 @@ If a profile was created with the wrong agent kind, stop or unregister any match
 | `/doctor [description]` | Run low-sensitive diagnostics |
 | `/help` | Help card |
 
-DMs do not require an @ mention. Groups and topic groups require `@bot` by default; `@all` is ignored. Cloud-doc comments in supported document types run when the bot is mentioned.
+DMs do not require an @ mention. Groups and topic groups require `@bot` by default; `@all` is ignored. Cloud-doc mentions run only when explicitly enabled for the profile.
 
 ## Reply Display and COT
 
@@ -195,7 +199,7 @@ The bridge checks that a selected directory exists, is a directory, and is not a
 
 ## Permission modes
 
-The recommended user-facing profile config is `permissions.defaultAccess` and `permissions.maxAccess`. New profiles default to `full` for both values so the bridge can keep local tools, authorization flows, file writes, and other agent features fully usable. To tighten a profile, set one or both values to `workspace` or `read-only`; stricter modes can limit local tool execution, login/authorization flows, file writes, and similar capabilities.
+The recommended user-facing profile config is `permissions.defaultAccess` and `permissions.maxAccess`. Newly registered profiles default to `workspace` for both values. Use `read-only` to restrict writes further. The example below explicitly opts into `full` for both values.
 
 This is a profile-field snippet. Do not replace the whole `config.json` with it; edit the matching profile's `permissions` field.
 
@@ -268,7 +272,7 @@ To let other people or groups in, add them to one of three lists:
 - Changes take effect on the **next message** — no restart needed.
 - **In groups you must `@` the bot first** (DMs don't need it). That's a separate toggle (`/config` → "require @ in groups"), independent of the lists above.
 - Strangers get pure silence — no reply at all. The one exception: if someone `@`-mentions the bot in a group that hasn't been opened up, the bot posts a friendly one-liner telling them an admin can run `/invite group` to enable it.
-- Cloud-doc comments are document-scoped: anyone who can comment in a supported document and mention the bot can trigger a reply.
+- When enabled, cloud-doc comments are document-scoped: anyone who can comment in a supported document and mention the bot can trigger a reply.
 
 ### Advanced: editing the config file directly
 
@@ -301,7 +305,7 @@ Each line carries `chatId` (group / DM id) and `senderId` (user `open_id`). Afte
 
 ## Cloud-doc comments
 
-Cloud-doc comments do not need a separate workspace binding or document allowlist. In supported document comments, mention the bot and the bridge replies in the same thread. Comment runs reuse the document session key and fall back to the user home directory when no document cwd was previously recorded.
+Cloud-doc comments are disabled by default. To enable them for a profile, add `"comments": { "enableDocumentComments": true }` to that profile in `~/.lark-channel/config.json` and restart the bridge. Enable this only for documents whose commenters you trust. Comments do not need a separate workspace binding or document allowlist. In supported document comments, mention the bot and the bridge replies in the same thread. Comment runs reuse the document session key and fall back to the user home directory when no document cwd was previously recorded.
 
 ## FAQ
 

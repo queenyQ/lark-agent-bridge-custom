@@ -31,6 +31,7 @@ export async function createBootstrapProfileConfig(
       : undefined;
   const profile = createDefaultProfileConfig({
     agentKind: input.agentKind,
+    permissions: { defaultAccess: 'workspace', maxAccess: 'workspace' },
     accounts: input.accounts,
     preferences: input.preferences,
     secrets: input.secrets,

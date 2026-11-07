@@ -1,5 +1,9 @@
 # lark-channel-bridge
 
+> **本仓库是个人 fork**，基于上游 [zarazhangrui/lark-coding-agent-bridge](https://github.com/zarazhangrui/lark-coding-agent-bridge) `0.7.1`（commit `5898681`）。
+> 改动见 [CHANGELOG.md](./CHANGELOG.md)。核心变化：`/stop` 只中断当前轮并保留排队消息，`/stop all` 才清空队列。
+> 原项目作者：Zara Zhang（[@zarazhangrui](https://github.com/zarazhangrui)），MIT License。
+
 把飞书 / Lark 消息和本地 Claude Code 或 Codex CLI 打通的轻量 bot。用一条命令启动，扫码绑定 PersonalAgent 应用，然后在飞书里和本机编程助手对话，让它读图、处理文件、改代码。
 
 [English README](./README.md)
@@ -12,7 +16,7 @@
 - **流式卡片**：文本回复和工具调用实时更新在同一张卡片上。
 - **COT 过程消息**：可选先发一条过程消息展示 agent 的阶段性文本和工具调用，再单独发送最终答案。
 - **会话延续**：每个聊天、话题或文档评论有自己的会话，不会互相串。
-- **排队与消息合并**：短时间连续发送的消息会合并处理；任务运行中收到的普通消息会排队到下一轮，`/new`、`/cd`、`/ws use`、`/stop` 这类命令可以中断当前任务。
+- **排队与消息合并**：短时间连续发送的消息会合并处理；任务运行中收到的普通消息会排队到下一轮。`/new`、`/cd`、`/ws use` 等命令会中断当前任务并清空排队消息；`/stop` 只中断当前轮并保留排队消息，`/stop all` 才会清空。
 - **多工作空间**：用 `/cd` 切换当前项目，用 `/ws` 保存和复用常用项目目录。
 - **图片 / 文件**：直接发给 bot，bridge 下载到本地后交给本机 agent 处理。
 - **卡片按钮**：`/help`、`/ws list`、`/status` 返回可点击的交互卡片。
@@ -27,10 +31,10 @@
 
 ## 安装
 
+从本仓库的 GitHub Releases 下载 `lark-channel-bridge-0.7.1-custom.1.tgz`，在下载目录执行下面的命令。从源码构建时，使用 Node.js 22.12+ 和 pnpm 10.33.0，然后运行 `pnpm install --frozen-lockfile` 和 `node dist/cli.js --help`。
+
 ```bash
-npm i -g lark-channel-bridge
-# 或
-pnpm add -g lark-channel-bridge
+npm install --global ./lark-channel-bridge-0.7.1-custom.1.tgz
 ```
 
 ## 首次启动
@@ -159,7 +163,7 @@ lark-channel-bridge profile export <name> --include-secrets --yes
 | `/doctor [描述]` | 执行低敏诊断 |
 | `/help` | 帮助卡片 |
 
-私聊不需要 @。群和话题群默认必须 `@bot`；`@all` 会被忽略。支持的云文档评论里 @bot 就会触发回复。
+私聊不需要 @。群和话题群默认必须 `@bot`；`@all` 会被忽略。显式启用云文档评论后，在支持的文档里 @bot 才会触发回复。
 
 ## 回复展示与 COT
 
@@ -195,7 +199,7 @@ bridge 会检查所选目录存在、是目录，并且不是 `/`、Home 根、�
 
 ## 权限模式
 
-推荐给用户配置的是 `permissions.defaultAccess` 和 `permissions.maxAccess`。新 profile 默认两项都是 `full`，以保持 bridge 的本地工具、授权流程、文件写入等能力完整可用。如需收紧权限，可以改成 `workspace` 或 `read-only`；收紧后本地工具执行、登录 / 授权流程、文件写入等能力可能受限。
+推荐给用户配置的是 `permissions.defaultAccess` 和 `permissions.maxAccess`。新注册的 profile 两项默认为 `workspace`，可以进一步收紧为 `read-only`。下面的示例显式开启 `full` 权限。
 
 下面只是 profile 里的字段片段，不要整段覆盖 `config.json`；请改对应 profile 下的 `permissions` 字段。
 
@@ -268,7 +272,7 @@ bridge 会检查所选目录存在、是目录，并且不是 `/`、Home 根、�
 - 改完**下一条消息**就生效，不用重启。
 - **群里默认要先 @bot 才会回**（私聊不用 @）。这是另一个独立开关（`/config` →"群里需要 @ bot"），和上面的名单是两回事。
 - 陌生人发消息一律静默丢弃，不会有任何回复。唯一的例外：有人在一个还没开放的群里 @bot，bot 会回一句友好提示，告诉他可以让管理员发 `/invite group` 开放这个群。
-- 云文档评论按文档权限生效：能在支持的文档里评论并 @bot 的人可以触发回复。
+- 启用后，云文档评论按文档权限生效，能在支持的文档里评论并 @bot 的人可以触发回复。
 
 ### 高级：直接改配置文件
 
@@ -301,7 +305,7 @@ grep '"event":"enter"' ~/.lark-channel/profiles/<profile>/logs/bridge-$(date +%Y
 
 ## 云文档评论
 
-云文档评论不再需要单独绑定工作目录或维护文档白名单。支持的文档评论里 @bot 后，bridge 会在同一个评论线程里回复。评论运行复用文档级 session key；没有记录过文档 cwd 时回退到用户 home 目录。
+云文档评论默认关闭。要启用，请在 `~/.lark-channel/config.json` 的对应 profile 下加入 `"comments": { "enableDocumentComments": true }`，再重启 Bridge。请只在评论者都可信的文档中使用。评论入口无需单独绑定工作目录或维护文档白名单。支持的文档评论里 @bot 后，bridge 会在同一个评论线程里回复。评论运行复用文档级 session key；没有记录过文档 cwd 时回退到用户 home 目录。
 
 ## 常见问题
 

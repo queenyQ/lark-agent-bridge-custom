@@ -257,13 +257,17 @@ describe('profile schema', () => {
     expect(cfg.comments).toEqual({});
   });
 
-  it('does not enable comment rate limits by default', () => {
+  it('keeps document comments off by default and preserves explicit opt-in', () => {
     const cfg = createDefaultProfileConfig({
       agentKind: 'claude',
       accounts: { app },
     });
 
     expect(cfg.comments).toEqual({});
+    expect(normalizeProfileConfig({
+      ...cfg,
+      comments: { enableDocumentComments: true },
+    }).comments).toEqual({ enableDocumentComments: true });
   });
 
   it('seeds attachment limits from the runtime policy', () => {

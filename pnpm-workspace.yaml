@@ -1,0 +1,9 @@
+onlyBuiltDependencies:
+  - esbuild
+  - protobufjs
+overrides:
+  '@protobufjs/utf8': 1.1.2
+  'follow-redirects': 1.16.2
+  'protobufjs': 7.6.6
+  'qs': 6.17.1
+  'ws': 8.22.1
