@@ -3,6 +3,11 @@
 本仓库是个人 fork。以下只记录相对上游的改动，上游历史见
 [zarazhangrui/lark-coding-agent-bridge](https://github.com/zarazhangrui/lark-coding-agent-bridge)。
 
+## 0.7.1-custom.2 — 2026-11-10
+
+- 原生支持 DeepSeek Harness，使用 `--agent dsh` 创建独立飞书机器人。
+- 补充 Claude Code、Codex 和 DSH 的独立接入步骤，并随安装包提供 DSH headless 配置示例。
+
 ## 0.7.1-custom.1 — 2026-10-23
 
 基于上游 `0.7.1`（commit `5898681`）。

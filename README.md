@@ -4,7 +4,7 @@
 > See [CHANGELOG.md](./CHANGELOG.md) for changes. Key difference: `/stop` only interrupts the current run and keeps queued messages; `/stop all` clears the queue.
 > Original project by Zara Zhang (张咋啦) ([@zarazhangrui](https://github.com/zarazhangrui)), MIT License.
 
-A lightweight bot that bridges Feishu / Lark messenger with your local Claude Code or Codex CLI. Run one command, scan a QR code to bind a PersonalAgent app, and talk to your local coding agent from chat.
+Connect Feishu / Lark to the local agents you use: Claude Code, Codex, and DeepSeek Harness. Install Bridge once, choose any one or more agents, and bind a separate PersonalAgent bot for each. Each bot calls its own native CLI.
 
 [中文 README](./README.zh.md)
 
@@ -14,11 +14,11 @@ For a product walkthrough, see the [Feishu document](https://larkcommunity.feish
 
 - **Claude Code (CC)**: built in. Install and sign in to `claude`, then create a separate profile with `--agent claude`.
 - **OpenAI Codex**: built in. Install and sign in to `codex`, then create a separate profile with `--agent codex`.
-- **DeepSeek Harness (DSH)**: tested locally through a Codex CLI protocol adapter. The public package contains the Bridge. DSH requires a separate DeepSeek Harness installation and compatible adapter. Set `codex.binaryPath` in a separate profile to the adapter executable.
+- **DeepSeek Harness (DSH)**: this branch runs the native `dsh` CLI. Install and sign in to DeepSeek Harness, then create a separate profile with `--agent dsh`. To reuse your desktop sign-in, set `LARK_CHANNEL_DSH_PATCH` during setup to a headless configuration patch that enables DeepSeek account credentials.
 
 ## What it does
 
-- Forwards Feishu / Lark messages to local Claude Code or Codex CLI. Send a DM directly, or `@bot` in a group.
+- Forwards Feishu / Lark messages to the native CLI selected for that bot. Send a DM directly, or `@bot` in a group.
 - **Streaming card**: text replies and tool calls update on one Lark card in real time.
 - **COT process messages**: optionally send a process message with agent progress text and tool calls, then send the final answer separately.
 - **Session continuity**: each chat, topic, or document comment thread keeps its own session.
@@ -33,14 +33,15 @@ For a product walkthrough, see the [Feishu document](https://larkcommunity.feish
 - At least one local agent installed and logged in:
   - Claude Code: `claude`, see https://docs.anthropic.com/en/docs/claude-code/quickstart
   - Codex CLI: `codex`, see https://developers.openai.com/codex/cli
-- A Feishu / Lark **PersonalAgent** app. The first-run QR wizard can create and bind one for you.
+  - DeepSeek Harness: `dsh`. The desktop sign-in setup below was verified on macOS.
+- One Feishu / Lark **PersonalAgent** app per profile. The first-run QR wizard can create and bind it for you.
 
 ## Install
 
-Download the matching `lark-agent-bridge-custom-0.7.1-custom.1.tgz` from this repository’s GitHub Releases and run the following in the download directory. To build from source, use Node.js 22.12+ and pnpm 10.33.0, then run `pnpm install --frozen-lockfile` and `node dist/cli.js --help`.
+Download the matching `lark-agent-bridge-custom-0.7.1-custom.2.tgz` from this repository’s GitHub Releases and run the following in the download directory. To build from source, use Node.js 22.12+ and pnpm 10.33.0, then run `pnpm install --frozen-lockfile` and `node dist/cli.js --help`.
 
 ```bash
-npm install --global ./lark-agent-bridge-custom-0.7.1-custom.1.tgz
+npm install --global ./lark-agent-bridge-custom-0.7.1-custom.2.tgz
 ```
 
 The installed command is still `lark-channel-bridge`. The custom and upstream packages share that command, so use separate npm prefixes if you need both.
@@ -100,14 +101,23 @@ Platform mapping:
 
 Daemon logs are under `~/.lark-channel/profiles/<profile>/logs/daemon/`.
 
-### Multiple profiles: Claude and Codex
+### Choose one or more agents
 
-By default, the bridge starts with the currently selected profile. Use `profile use <name>` to change it. Each profile keeps its own app credentials, sessions, working directories, and logs. Create multiple profiles only when you need to connect multiple PersonalAgent apps, or run Claude and Codex as separate bots:
+By default, the bridge starts with the currently selected profile. Use `profile use <name>` to change it. Each profile keeps its own app credentials, sessions, working directories, and logs. Run only the commands for the agents you want. Use a different PersonalAgent app for each profile:
 
 ```bash
 lark-channel-bridge start --profile claude --agent claude
 lark-channel-bridge start --profile codex --agent codex
 ```
+
+For DeepSeek Harness on macOS, sign in to the desktop app first. Copy the packaged example to a stable path, then pass it when creating the DSH profile:
+
+```bash
+cp "$(npm root -g)/lark-agent-bridge-custom/dsh-headless.example.yml" "$HOME/dsh-headless.example.yml"
+LARK_CHANNEL_DSH_PATCH="$HOME/dsh-headless.example.yml" lark-channel-bridge start --profile dsh --agent dsh
+```
+
+The DSH profile remembers the path to the patch. If DeepSeek Harness is installed in a nonstandard location, set `LARK_CHANNEL_DSH_BIN` to the full path to the `dsh` executable on first setup. For an existing PersonalAgent app, add `--app-id cli_xxx` to the first command for that profile. Each running profile has its own OS service, so you can manage one bot at a time.
 
 For example, to restart only the Codex bot:
 
@@ -121,14 +131,14 @@ lark-channel-bridge status --profile codex
 ### Host CLI
 
 ```text
-lark-channel-bridge run [--profile <name>] [--agent claude|codex] [--workspace <path>] [-c <config>]
+lark-channel-bridge run [--profile <name>] [--agent claude|codex|dsh] [--workspace <path>] [-c <config>]
 lark-channel-bridge migrate [--profile <name>] [--agent claude|codex]
 lark-channel-bridge ps
 lark-channel-bridge kill <id|#>
 lark-channel-bridge --help
 ```
 
-`profile use <name>` changes the profile used by later default starts. Use these profile management commands when running separate Claude / Codex bots, connecting multiple PersonalAgent apps, or doing scripted deployment:
+`profile use <name>` changes the profile used by later default starts. Use these profile management commands when connecting multiple PersonalAgent apps or doing scripted deployment:
 
 ```bash
 lark-channel-bridge profile create claude --agent claude

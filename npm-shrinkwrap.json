@@ -4,7 +4,7 @@
   "requires": true,
   "packages": {
     "": {
-      "version": "0.7.1-custom.1",
+      "version": "0.7.1-custom.2",
       "license": "MIT",
       "dependencies": {
         "@clack/prompts": "^1.4.0",
@@ -851,5 +851,5 @@
       }
     }
   },
-  "version": "0.7.1-custom.1"
+  "version": "0.7.1-custom.2"
 }

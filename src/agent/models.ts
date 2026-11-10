@@ -45,6 +45,7 @@ const CODEX_MODELS: ModelOption[] = [
 
 /** The model picker options for a profile's agent kind. */
 export function supportedModels(agentKind: AgentKind): ModelOption[] {
+  if (agentKind === 'dsh') return [{ value: DEFAULT_MODEL, label: '跟随 DSH 配置' }];
   return agentKind === 'codex' ? CODEX_MODELS : CLAUDE_MODELS;
 }
 

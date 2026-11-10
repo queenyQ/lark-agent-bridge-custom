@@ -1,5 +1,6 @@
 import { ClaudeAdapter } from '../agent/claude/adapter';
 import { CodexAdapter } from '../agent/codex/adapter';
+import { DshAdapter } from '../agent/dsh/adapter';
 import { AgentPreflightError, type AgentAvailability } from '../agent/preflight';
 import type { AgentAdapter } from '../agent/types';
 import type { AppPaths } from '../config/app-paths';
@@ -48,6 +49,9 @@ export function createRuntimeAgent(
       sandbox: profileConfig.sandbox.defaultMode,
       larkChannel,
     });
+  }
+  if (profileConfig.agentKind === 'dsh' && profileConfig.dsh) {
+    return new DshAdapter(profileConfig.dsh, larkChannel);
   }
   return new ClaudeAdapter({ larkChannel });
 }

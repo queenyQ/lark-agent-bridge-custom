@@ -1,10 +1,10 @@
 import { mkdir, realpath } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { AgentPreflightError } from '../agent/preflight';
 import { createDefaultProfileConfig, type AgentKind, type ProfileConfig } from '../config/profile-schema';
 import type { AppConfig } from '../config/schema';
 import { resolveWorkingDirectory } from '../policy/workspace';
-import { resolveExecutablePath } from './agent-detection';
+import { dshCommand, resolveExecutablePath } from './agent-detection';
 
 export interface BootstrapProfileInput {
   agentKind: AgentKind;
@@ -29,6 +29,15 @@ export async function createBootstrapProfileConfig(
     input.agentKind === 'codex'
       ? await createBootstrapCodexConfig(input.codexBinaryPath)
       : undefined;
+  const dsh = input.agentKind === 'dsh'
+    ? {
+        binaryPath: await resolveExecutablePath(dshCommand()),
+        profile: process.env.LARK_CHANNEL_DSH_PROFILE || 'headless',
+        ...(process.env.LARK_CHANNEL_DSH_PATCH
+          ? { patchPath: resolve(process.env.LARK_CHANNEL_DSH_PATCH) }
+          : {}),
+      }
+    : undefined;
   const profile = createDefaultProfileConfig({
     agentKind: input.agentKind,
     permissions: { defaultAccess: 'workspace', maxAccess: 'workspace' },
@@ -36,6 +45,7 @@ export async function createBootstrapProfileConfig(
     preferences: input.preferences,
     secrets: input.secrets,
     ...(codex ? { codex } : {}),
+    ...(dsh ? { dsh } : {}),
   });
   if (workspace) {
     profile.workspaces = {

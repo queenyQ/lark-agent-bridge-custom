@@ -4,7 +4,7 @@
 > 改动见 [CHANGELOG.md](./CHANGELOG.md)。核心变化：`/stop` 只中断当前轮并保留排队消息，`/stop all` 才清空队列。
 > 原项目作者：张咋啦（Zara Zhang）（[@zarazhangrui](https://github.com/zarazhangrui)），MIT License。
 
-把飞书 / Lark 消息和本地 Claude Code 或 Codex CLI 打通的轻量 bot。用一条命令启动，扫码绑定 PersonalAgent 应用，然后在飞书里和本机编程助手对话，让它读图、处理文件、改代码。
+在飞书 / Lark 里给本机的 Claude Code、Codex 和 DeepSeek Harness 派任务。Bridge 装一次，三个智能体任选一个或多个，每个智能体绑定自己的 PersonalAgent 机器人，直接调用对应的原生 CLI。
 
 [English README](./README.md)
 
@@ -14,11 +14,11 @@
 
 - **Claude Code（CC）**：内置支持。安装并登录 `claude` 后，使用 `--agent claude` 创建独立 profile。
 - **OpenAI Codex**：内置支持。安装并登录 `codex` 后，使用 `--agent codex` 创建独立 profile。
-- **DeepSeek Harness（DSH）**：已在本地通过 Codex CLI 协议适配层接入。公开安装包只包含 Bridge，使用 DSH 还需另行安装 DeepSeek Harness 和兼容适配器，并将独立 profile 的 `codex.binaryPath` 指向适配器。
+- **DeepSeek Harness（DSH）**：本分支直接调用原生 `dsh` CLI。安装并登录 DeepSeek Harness 后，用 `--agent dsh` 创建独立 profile。使用桌面端登录的用户还需在首次配置时通过 `LARK_CHANNEL_DSH_PATCH` 指定启用 DeepSeek 账号凭据的 headless 配置。
 
 ## 主要功能
 
-- 在飞书私聊直接发消息，或在群里 `@bot`，把任务转给本机 Claude Code / Codex CLI。
+- 在飞书私聊直接发消息，或在群里 `@bot`，把任务交给该机器人对应的本机智能体。
 - **流式卡片**：文本回复和工具调用实时更新在同一张卡片上。
 - **COT 过程消息**：可选先发一条过程消息展示 agent 的阶段性文本和工具调用，再单独发送最终答案。
 - **会话延续**：每个聊天、话题或文档评论有自己的会话，不会互相串。
@@ -33,14 +33,15 @@
 - 本机至少安装并登录一个 agent：
   - Claude Code：`claude`，安装说明：https://docs.anthropic.com/en/docs/claude-code/quickstart
   - Codex CLI：`codex`，安装说明：https://developers.openai.com/codex/cli
-- 一个飞书 / Lark PersonalAgent 应用。首次启动的扫码向导可以帮你创建并绑定。
+  - DeepSeek Harness：`dsh`。下方复用桌面登录的流程已在 macOS 验证。
+- 每个 profile 对应一个飞书 / Lark PersonalAgent 应用。首次启动的扫码向导可以帮你创建并绑定。
 
 ## 安装
 
-从本仓库的 GitHub Releases 下载 `lark-agent-bridge-custom-0.7.1-custom.1.tgz`，在下载目录执行下面的命令。从源码构建时，使用 Node.js 22.12+ 和 pnpm 10.33.0，然后运行 `pnpm install --frozen-lockfile` 和 `node dist/cli.js --help`。
+从本仓库的 GitHub Releases 下载 `lark-agent-bridge-custom-0.7.1-custom.2.tgz`，在下载目录执行下面的命令。从源码构建时，使用 Node.js 22.12+ 和 pnpm 10.33.0，然后运行 `pnpm install --frozen-lockfile` 和 `node dist/cli.js --help`。
 
 ```bash
-npm install --global ./lark-agent-bridge-custom-0.7.1-custom.1.tgz
+npm install --global ./lark-agent-bridge-custom-0.7.1-custom.2.tgz
 ```
 
 安装后的终端命令仍是 `lark-channel-bridge`。本版和上游版共用命令名，请勿安装到同一个 npm 全局前缀。
@@ -100,16 +101,25 @@ lark-channel-bridge unregister [--profile <name>]
 
 daemon 日志在 `~/.lark-channel/profiles/<profile>/logs/daemon/`。
 
-### 多 profile：分别运行 Claude 和 Codex
+### 按需接入一个或多个智能体
 
-默认情况下，bridge 使用当前激活的 profile；可以通过 `profile use <name>` 切换。每个 profile 会维护独立的应用凭据、会话、工作目录和日志。只有在需要同时连接多个 PersonalAgent 应用，或分别运行 Claude 和 Codex 时，才需要创建多个 profile：
+默认情况下，bridge 使用当前激活的 profile；可以通过 `profile use <name>` 切换。每个 profile 会维护独立的应用凭据、会话、工作目录和日志。只运行你需要的命令。每个 profile 绑定一个不同的 PersonalAgent 应用。
 
 ```bash
 lark-channel-bridge start --profile claude --agent claude
 lark-channel-bridge start --profile codex --agent codex
 ```
 
-例如只重启 Codex bot：
+在 macOS 上接入 DSH 时，先打开 DeepSeek Harness 并登录。将安装包附带的示例复制到固定位置，再创建 DSH profile。
+
+```bash
+cp "$(npm root -g)/lark-agent-bridge-custom/dsh-headless.example.yml" "$HOME/dsh-headless.example.yml"
+LARK_CHANNEL_DSH_PATCH="$HOME/dsh-headless.example.yml" lark-channel-bridge start --profile dsh --agent dsh
+```
+
+DSH profile 会保存这个配置文件的路径。如果 DeepSeek Harness 装在其他位置，首次配置时用 `LARK_CHANNEL_DSH_BIN` 指定 `dsh` 的完整路径。已有 PersonalAgent 应用时，在对应 profile 的首次启动命令加 `--app-id cli_xxx`。每个 profile 有自己的系统服务，可以单独管理。
+
+例如，只重启 Codex bot。
 
 ```bash
 lark-channel-bridge restart --profile codex
@@ -121,14 +131,14 @@ lark-channel-bridge status --profile codex
 ### 宿主 CLI
 
 ```text
-lark-channel-bridge run [--profile <name>] [--agent claude|codex] [--workspace <path>] [-c <config>]
+lark-channel-bridge run [--profile <name>] [--agent claude|codex|dsh] [--workspace <path>] [-c <config>]
 lark-channel-bridge migrate [--profile <name>] [--agent claude|codex]
 lark-channel-bridge ps
 lark-channel-bridge kill <id|#>
 lark-channel-bridge --help
 ```
 
-`profile use <name>` 会切换后续默认启动使用的 profile。需要同时跑 Claude / Codex 两个 bot、连接多套 PersonalAgent 应用，或做脚本化部署时，再使用这些 profile 管理命令：
+`profile use <name>` 会切换后续默认启动使用的 profile。要连接多套 PersonalAgent 应用或做脚本化部署，可以使用这些 profile 管理命令。
 
 ```bash
 lark-channel-bridge profile create claude --agent claude

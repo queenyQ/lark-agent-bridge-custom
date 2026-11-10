@@ -616,7 +616,7 @@ class UserCancelledError extends Error {
 }
 
 function displayAgentKind(kind: AgentKind): string {
-  return kind === 'claude' ? 'Claude Code' : 'Codex CLI';
+  return { claude: 'Claude Code', codex: 'Codex CLI', dsh: 'DeepSeek Harness' }[kind];
 }
 
 async function maybeMigrateRootPlaintextSecret(

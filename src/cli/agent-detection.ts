@@ -2,7 +2,8 @@ import { constants } from 'node:fs';
 import { access } from 'node:fs/promises';
 import { delimiter, extname, isAbsolute, join } from 'node:path';
 
-export type AgentKind = 'claude' | 'codex';
+import type { AgentKind } from '../config/profile-schema';
+export type { AgentKind } from '../config/profile-schema';
 
 export interface DetectedAgent {
   kind: AgentKind;
@@ -42,6 +43,13 @@ function pathExts(): string[] {
     .split(';')
     .map((ext) => ext.trim())
     .filter(Boolean);
+}
+
+export function dshCommand(): string {
+  return process.env.LARK_CHANNEL_DSH_BIN ??
+    (process.platform === 'darwin'
+      ? '/Applications/DeepSeek Harness.app/Contents/Resources/runtime/cli/bin/dsh'
+      : 'dsh');
 }
 
 export async function detectInstalledAgents(): Promise<DetectedAgent[]> {
