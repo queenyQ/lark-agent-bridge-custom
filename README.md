@@ -1,5 +1,8 @@
 # Lark Agent Bridge · queenyQ Custom
 
+> Release sequence / 公开发布序号: **Custom 3** · Package version / 内部版本号: **v1.1.1**. Custom 1 = v1.0.0; Custom 2 = v1.1.0. Upstream base / 上游基础版本: 0.7.1.
+
+
 > **This is a personal fork** of [zarazhangrui/lark-coding-agent-bridge](https://github.com/zarazhangrui/lark-coding-agent-bridge), based on `0.7.1` (commit `5898681`).
 > See [CHANGELOG.md](./CHANGELOG.md) for changes. Key difference: `/stop` only interrupts the current run and keeps queued messages; `/stop all` clears the queue.
 > Original project by Zara Zhang (张咋啦) ([@zarazhangrui](https://github.com/zarazhangrui)), MIT License.
@@ -38,10 +41,10 @@ For a product walkthrough, see the [Feishu document](https://larkcommunity.feish
 
 ## Install
 
-Download the matching `lark-agent-bridge-custom-0.7.1-custom.3.tgz` from this repository’s GitHub Releases and run the following in the download directory. To build from source, use Node.js 22.12+ and pnpm 10.33.0, then run `pnpm install --frozen-lockfile` and `node dist/cli.js --help`.
+Download the matching `lark-agent-bridge-custom-1.1.1.tgz` from this repository’s GitHub Releases and run the following in the download directory. To build from source, use Node.js 22.12+ and pnpm 10.33.0, then run `pnpm install --frozen-lockfile` and `node dist/cli.js --help`.
 
 ```bash
-npm install --global ./lark-agent-bridge-custom-0.7.1-custom.3.tgz
+npm install --global ./lark-agent-bridge-custom-1.1.1.tgz
 ```
 
 The installed command is still `lark-channel-bridge`. The custom and upstream packages share that command, so use separate npm prefixes if you need both.

@@ -3,7 +3,7 @@
 本仓库是个人 fork。以下只记录相对上游的改动，上游历史见
 [zarazhangrui/lark-coding-agent-bridge](https://github.com/zarazhangrui/lark-coding-agent-bridge)。
 
-## 0.7.1-custom.3 — 2026-11-22
+## Custom 3 · v1.1.1 — 2026-11-22
 
 - 新凭据使用固定的本机随机密钥，主机名或网络变化后仍可读取。
 - 增加 `secrets migrate --profile <name> --legacy-hostname <previous-hostname>`，支持备份旧密文并迁移至新格式。
@@ -15,12 +15,12 @@
 - 补齐中英文命令表中的 `/stop all`；两种中断行为从 custom.1 起已存在。
 - 新用户可直接安装本版，无需先装 custom.2 或提供旧密钥；迁移仅用于旧版已有凭据。
 
-## 0.7.1-custom.2 — 2026-11-10
+## Custom 2 · v1.1.0 — 2026-11-10
 
 - 原生支持 DeepSeek Harness，使用 `--agent dsh` 创建独立飞书机器人。
 - 补充 Claude Code、Codex 和 DSH 的独立接入步骤，并随安装包提供 DSH headless 配置示例。
 
-## 0.7.1-custom.1 — 2026-10-23
+## Custom 1 · v1.0.0 — 2026-10-23
 
 基于上游 `0.7.1`（commit `5898681`）。
 

@@ -1,5 +1,8 @@
 # Lark Agent Bridge · queenyQ Custom
 
+> Release sequence / 公开发布序号: **Custom 3** · Package version / 内部版本号: **v1.1.1**. Custom 1 = v1.0.0; Custom 2 = v1.1.0. Upstream base / 上游基础版本: 0.7.1.
+
+
 > **本仓库是个人 fork**，基于上游 [zarazhangrui/lark-coding-agent-bridge](https://github.com/zarazhangrui/lark-coding-agent-bridge) `0.7.1`（commit `5898681`）。
 > 改动见 [CHANGELOG.md](./CHANGELOG.md)。核心变化：`/stop` 只中断当前轮并保留排队消息，`/stop all` 才清空队列。
 > 原项目作者：张咋啦（Zara Zhang）（[@zarazhangrui](https://github.com/zarazhangrui)），MIT License。
@@ -38,10 +41,10 @@
 
 ## 安装
 
-从本仓库的 GitHub Releases 下载 `lark-agent-bridge-custom-0.7.1-custom.3.tgz`，在下载目录执行下面的命令。从源码构建时，使用 Node.js 22.12+ 和 pnpm 10.33.0，然后运行 `pnpm install --frozen-lockfile` 和 `node dist/cli.js --help`。
+从本仓库的 GitHub Releases 下载 `lark-agent-bridge-custom-1.1.1.tgz`，在下载目录执行下面的命令。从源码构建时，使用 Node.js 22.12+ 和 pnpm 10.33.0，然后运行 `pnpm install --frozen-lockfile` 和 `node dist/cli.js --help`。
 
 ```bash
-npm install --global ./lark-agent-bridge-custom-0.7.1-custom.3.tgz
+npm install --global ./lark-agent-bridge-custom-1.1.1.tgz
 ```
 
 安装后的终端命令仍是 `lark-channel-bridge`。本版和上游版共用命令名，请勿安装到同一个 npm 全局前缀。
