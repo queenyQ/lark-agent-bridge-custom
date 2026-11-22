@@ -322,6 +322,14 @@ export async function startChannel(deps: StartChannelDeps): Promise<BridgeChanne
         });
       } catch (err) {
         log.fail('flush', err);
+        // Preparation failed before the batch reached the agent. Keep it for
+        // the next input rather than silently discarding it or retry-looping.
+        const newer = pending.cancel(scope);
+        pending.unblock(scope);
+        pending.restore(scope, [...batch, ...newer]);
+        await channel.send(firstMsg.chatId, {
+          text: '这批消息处理失败，已保留。请发送“继续”重试，无需重发原消息。',
+        }, { replyTo: firstMsg.messageId }).catch((sendErr) => log.fail('flush-notice', sendErr));
       } finally {
         pending.unblock(scope);
         log.info('flush', 'end');

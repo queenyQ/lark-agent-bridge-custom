@@ -38,10 +38,10 @@ For a product walkthrough, see the [Feishu document](https://larkcommunity.feish
 
 ## Install
 
-Download the matching `lark-agent-bridge-custom-0.7.1-custom.2.tgz` from this repository’s GitHub Releases and run the following in the download directory. To build from source, use Node.js 22.12+ and pnpm 10.33.0, then run `pnpm install --frozen-lockfile` and `node dist/cli.js --help`.
+Download the matching `lark-agent-bridge-custom-0.7.1-custom.3.tgz` from this repository’s GitHub Releases and run the following in the download directory. To build from source, use Node.js 22.12+ and pnpm 10.33.0, then run `pnpm install --frozen-lockfile` and `node dist/cli.js --help`.
 
 ```bash
-npm install --global ./lark-agent-bridge-custom-0.7.1-custom.2.tgz
+npm install --global ./lark-agent-bridge-custom-0.7.1-custom.3.tgz
 ```
 
 The installed command is still `lark-channel-bridge`. The custom and upstream packages share that command, so use separate npm prefixes if you need both.
@@ -71,6 +71,28 @@ lark-channel-bridge start --app-id cli_xxx
 ```
 
 For Lark global apps, add `--tenant lark`.
+
+## Upgrades and legacy credentials
+
+Download the new archive from GitHub Releases and upgrade using the installation prefix you originally chose. For a user-owned installation:
+
+```bash
+npm install --global --prefix "$HOME/.local" ./lark-agent-bridge-custom-<version>.tgz
+export PATH="$HOME/.local/bin:$PATH"
+npm install --global --prefix "$HOME/.local" @larksuite/cli@1.0.100
+lark-cli --version
+```
+
+New keystores use a persistent random local key. After upgrading an existing installation, migrate each profile and use `start` to refresh the service's Node and Bridge paths:
+
+```bash
+lark-channel-bridge secrets migrate --profile claude
+lark-channel-bridge start --profile claude
+```
+
+Replace `claude` with each existing profile name. If the hostname already changed, pass `--legacy-hostname <previous-hostname>`. Migration verifies decryption before replacing the store, preserves `secrets.enc.v1.bak`, and can be repeated safely. Rebind with your app credentials if the original hostname or key cannot be recovered.
+
+Privately back up each profile's `.keystore.key` together with `secrets.enc`. Losing the key makes the ciphertext unreadable. Keep keys and credential backups outside Git repositories.
 
 ## Background service
 
@@ -173,7 +195,8 @@ If a profile was created with the wrong agent kind, stop or unregister any match
 | `/invite group` | Allow the current group to use the bot |
 | `/invite all group` | Allow all groups the bot has joined |
 | `/remove user @name`, `/remove admin @name`, `/remove group` | Remove access entries |
-| `/stop` | Stop the current run, including the card stop button |
+| `/stop` | Interrupt the current run and keep queued messages for the next turn |
+| `/stop all` | Interrupt the current run and clear queued messages in this conversation |
 | `/timeout [N\|off\|default]` | Set or clear the current session idle watchdog |
 | `/ps` | List local bridge processes |
 | `/exit <id\|#>` | Stop a bridge process |

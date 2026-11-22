@@ -30,6 +30,18 @@ describe('logger redaction', () => {
     await rm(logsDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 25 });
   });
 
+  it('handles circular SDK errors and throwing getters without aborting message processing', async () => {
+    const request: Record<string, unknown> = { authorization: 'private-secret' };
+    request.socket = { request };
+    Object.defineProperty(request, 'reading', { enumerable: true, get() { throw new Error('getter failed'); } });
+    expect(() => log.warn('sdk', 'error', { request })).not.toThrow();
+    await flushLogger();
+    const text = await readTodayLog();
+    expect(text).toContain('[Circular]');
+    expect(text).toContain('[Unreadable]');
+    expect(text).not.toContain('private-secret');
+  });
+
   it('redacts sensitive substrings inside arbitrary string fields before writing logs', async () => {
     log.warn('agent', 'stderr', {
       line:

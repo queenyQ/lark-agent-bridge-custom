@@ -197,6 +197,8 @@ function sanitizeLogValue(
   key: string,
   value: unknown,
   options: SanitizeOptions = EXTERNAL_SANITIZE,
+  seen = new WeakSet<object>(),
+  depth = 0,
 ): unknown {
   const normalizedKey = key.startsWith('_') ? key.slice(1) : key;
   if (value === undefined) return undefined;
@@ -207,13 +209,22 @@ function sanitizeLogValue(
   }
   if (RESOURCE_ID_KEYS.has(normalizedKey)) return '[REDACTED_RESOURCE]';
   if (options.redactIds && ID_KEYS.has(normalizedKey)) return redactId(value);
+  if (value && typeof value === 'object') {
+    if (seen.has(value)) return '[Circular]';
+    if (depth >= 20) return '[MaxDepth]';
+    seen.add(value);
+  }
   if (Array.isArray(value)) {
-    return value.map((item) => sanitizeLogValue(key, item, options));
+    return value.map((item) => sanitizeLogValue(key, item, options, seen, depth + 1));
   }
   if (value && typeof value === 'object') {
     const nested: Record<string, unknown> = {};
-    for (const [nestedKey, nestedValue] of Object.entries(value)) {
-      nested[nestedKey] = sanitizeLogValue(nestedKey, nestedValue, options);
+    for (const nestedKey of Object.keys(value)) {
+      try {
+        nested[nestedKey] = sanitizeLogValue(nestedKey, (value as Record<string, unknown>)[nestedKey], options, seen, depth + 1);
+      } catch {
+        nested[nestedKey] = '[Unreadable]';
+      }
     }
     return nested;
   }

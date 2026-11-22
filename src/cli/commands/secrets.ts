@@ -1,5 +1,5 @@
 import { resolveAppPaths, type AppPaths } from '../../config/app-paths';
-import { getSecret, listSecretIds, removeSecret, setSecret } from '../../config/keystore';
+import { getSecret, listSecretIds, migrateKeystore, removeSecret, setSecret } from '../../config/keystore';
 import { paths } from '../../config/paths';
 import { loadRootConfig, readActiveProfile } from '../../config/profile-store';
 import { secretKeyForApp } from '../../config/schema';
@@ -207,4 +207,10 @@ async function readAllStdin(): Promise<string> {
     process.stdin.on('end', () => resolve(data));
     process.stdin.on('error', reject);
   });
+}
+
+export async function runSecretsMigrate(opts: SecretProfileOptions & { legacyHostname?: string }): Promise<void> {
+  const appPaths = await resolveSecretProfilePaths(opts);
+  await migrateKeystore(appPaths, opts.legacyHostname);
+  console.log('✓ Keystore uses a persistent local key. Keep .keystore.key with your encrypted backup.');
 }

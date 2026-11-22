@@ -1,30 +1,22 @@
 import { createCipheriv, createDecipheriv, pbkdf2Sync, randomBytes } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import * as lockfile from 'proper-lockfile';
 import { hostname, userInfo } from 'node:os';
 import type { AppPaths } from './app-paths';
 import { paths } from './paths';
 import { writeFileAtomic } from '../platform/atomic-write';
 
 /**
- * Local AES-256-GCM keystore for App Secrets and similar.
- *
- * Layout on disk:
- *   ~/.lark-channel/secrets.enc      — JSON map { id → encrypted envelope }
- *   ~/.lark-channel/.keystore.salt   — 32 random bytes, generated once
- *
- * Both files are chmod 0600. The encryption key is derived (PBKDF2-SHA256,
- * 100k iters) from `hostname + userInfo().username + salt`. This is
- * **defense-in-depth against accidental disclosure** (backups, git commits,
- * log dumps) — *not* against a same-user process actively decrypting. That
- * threat needs a real OS keychain, which is out of scope for this bridge
- * given lark-cli already terminates secrets in its own keychain on bind.
+ * Version 1 derives its key from the hostname and salt.
+ * Version 2 uses a private random key beside the encrypted store.
+ * Back up the key together with the ciphertext to recover a version 2 store.
  */
-
 const KEY_LEN = 32;
 const IV_LEN = 12; // GCM standard
 const TAG_LEN = 16; // GCM auth tag
 const PBKDF2_ITER = 100_000;
-const FILE_VERSION = 1;
+const FILE_VERSION = 2;
 const derivedKeyCache = new Map<string, Buffer>();
 
 interface Envelope {
@@ -48,8 +40,10 @@ async function readStore(storePaths: KeystorePaths = paths): Promise<StoreFile> 
   try {
     const text = await readFile(storePaths.secretsFile, 'utf8');
     const parsed = JSON.parse(text) as Partial<StoreFile>;
-    if (parsed?.version !== FILE_VERSION || !parsed.entries) return emptyStore();
-    return { version: parsed.version, entries: { ...parsed.entries } };
+    if (![1, FILE_VERSION].includes(parsed?.version ?? 0) || !parsed.entries) {
+      throw new Error('Unsupported or invalid keystore format. Restore a backup before writing.');
+    }
+    return { version: parsed.version!, entries: { ...parsed.entries } };
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') return emptyStore();
     throw err;
@@ -66,32 +60,92 @@ async function writeStore(store: StoreFile, storePaths: KeystorePaths = paths): 
   });
 }
 
-/**
- * Load the salt, or generate one if absent. The salt is **not a secret** —
- * an attacker that can read this file can also read the keystore. Its job
- * is to ensure two users on the same machine don't derive the same key.
- */
+/** Legacy salts must survive until every version 1 store has migrated. */
 async function loadOrCreateSalt(storePaths: KeystorePaths = paths): Promise<Buffer> {
-  try {
-    const buf = await readFile(storePaths.keystoreSaltFile);
-    if (buf.length === KEY_LEN) return buf;
-  } catch (err) {
-    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
-  }
-  const salt = randomBytes(KEY_LEN);
-  await writeFileAtomic(storePaths.keystoreSaltFile, salt, { mode: 0o600 });
+  const salt = await readFile(storePaths.keystoreSaltFile);
+  if (salt.length !== KEY_LEN) throw new Error('Invalid legacy keystore salt. Restore the salt backup.');
   return salt;
 }
 
-async function deriveKey(storePaths: KeystorePaths = paths): Promise<Buffer> {
-  const cacheKey = `${storePaths.keystoreSaltFile}`;
+async function deriveKey(storePaths: KeystorePaths = paths, legacyHostname = hostname()): Promise<Buffer> {
+  const cacheKey = `${storePaths.keystoreSaltFile}|${legacyHostname}`;
   const cached = derivedKeyCache.get(cacheKey);
   if (cached) return cached;
   const salt = await loadOrCreateSalt(storePaths);
-  const seed = `${hostname()}|${userInfo().username}`;
+  const seed = `${legacyHostname}|${userInfo().username}`;
   const key = pbkdf2Sync(seed, salt, PBKDF2_ITER, KEY_LEN, 'sha256');
   derivedKeyCache.set(cacheKey, key);
   return key;
+}
+
+async function withStoreLock<T>(storePaths: KeystorePaths, fn: () => Promise<T>): Promise<T> {
+  await mkdir(dirname(storePaths.secretsFile), { recursive: true, mode: 0o700 });
+  const target = `${storePaths.secretsFile}.write-lock`;
+  await writeFile(target, '', { flag: 'a', mode: 0o600 });
+  const release = await lockfile.lock(target, {
+    realpath: false,
+    retries: { retries: 20, minTimeout: 25, maxTimeout: 100 },
+  });
+  try {
+    return await fn();
+  } finally {
+    await release();
+  }
+}
+
+function masterKeyPath(storePaths: KeystorePaths): string {
+  return join(dirname(storePaths.secretsFile), '.keystore.key');
+}
+
+async function stableKey(storePaths: KeystorePaths, create: boolean): Promise<Buffer> {
+  const file = masterKeyPath(storePaths);
+  try {
+    const key = await readFile(file);
+    if (key.length !== KEY_LEN) throw new Error('Invalid keystore key. Restore the key backup.');
+    return key;
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
+    if (!create) throw new Error('Keystore key is missing. Restore .keystore.key or rebind the profile.');
+  }
+  const key = randomBytes(KEY_LEN);
+  await writeFileAtomic(file, key, { mode: 0o600 });
+  return key;
+}
+
+async function upgradeStore(store: StoreFile, storePaths: KeystorePaths, legacyHostname?: string): Promise<Buffer> {
+  if (store.version === FILE_VERSION) {
+    return stableKey(storePaths, Object.keys(store.entries).length === 0);
+  }
+  const oldKey = await deriveKey(storePaths, legacyHostname);
+  const plaintext = Object.entries(store.entries).map(([id, value]) => [id, decrypt(oldKey, value)] as const);
+  const original = await readFile(storePaths.secretsFile);
+  const backup = `${storePaths.secretsFile}.v1.bak`;
+  try {
+    await writeFile(backup, original, { flag: 'wx', mode: 0o600 });
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err;
+    if (!(await readFile(backup)).equals(original)) {
+      throw new Error('Legacy backup differs from the current store. Preserve it before retrying migration.');
+    }
+  }
+  const key = await stableKey(storePaths, true);
+  store.entries = Object.fromEntries(plaintext.map(([id, value]) => [id, encrypt(key, value)]));
+  for (const [id, value] of plaintext) {
+    if (decrypt(key, store.entries[id]!) !== value) throw new Error('Keystore migration verification failed.');
+  }
+  store.version = FILE_VERSION;
+  return key;
+}
+
+export async function migrateKeystore(
+  storePaths: KeystorePaths = paths,
+  legacyHostname?: string,
+): Promise<void> {
+  await withStoreLock(storePaths, async () => {
+    const store = await readStore(storePaths);
+    await upgradeStore(store, storePaths, legacyHostname);
+    await writeStore(store, storePaths);
+  });
 }
 
 function encrypt(key: Buffer, plaintext: string): Envelope {
@@ -128,8 +182,15 @@ export async function getSecret(
   const store = await readStore(storePaths);
   const env = store.entries[id];
   if (!env) return undefined;
-  const key = await deriveKey(storePaths);
-  return decrypt(key, env);
+  const key = store.version === 1 ? await deriveKey(storePaths) : await stableKey(storePaths, false);
+  try {
+    return decrypt(key, env);
+  } catch (err) {
+    if (store.version === 1) {
+      throw new Error('Legacy keystore could not be decrypted. Run secrets migrate --legacy-hostname <previous-hostname>, or rebind the profile.');
+    }
+    throw err;
+  }
 }
 
 /** Store / overwrite the secret for `id`. */
@@ -138,11 +199,12 @@ export async function setSecret(
   plaintext: string,
   storePaths: KeystorePaths = paths,
 ): Promise<void> {
-  const key = await deriveKey(storePaths);
-  const env = encrypt(key, plaintext);
-  const store = await readStore(storePaths);
-  store.entries[id] = env;
-  await writeStore(store, storePaths);
+  await withStoreLock(storePaths, async () => {
+    const store = await readStore(storePaths);
+    const key = await upgradeStore(store, storePaths);
+    store.entries[id] = encrypt(key, plaintext);
+    await writeStore(store, storePaths);
+  });
 }
 
 /** Remove an entry. Returns true if something was removed. */
@@ -150,11 +212,14 @@ export async function removeSecret(
   id: string,
   storePaths: KeystorePaths = paths,
 ): Promise<boolean> {
-  const store = await readStore(storePaths);
-  if (!(id in store.entries)) return false;
-  delete store.entries[id];
-  await writeStore(store, storePaths);
-  return true;
+  return withStoreLock(storePaths, async () => {
+    const store = await readStore(storePaths);
+    if (!(id in store.entries)) return false;
+    await upgradeStore(store, storePaths);
+    delete store.entries[id];
+    await writeStore(store, storePaths);
+    return true;
+  });
 }
 
 /** List ids (no secrets in the output, by design). */

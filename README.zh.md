@@ -38,10 +38,10 @@
 
 ## 安装
 
-从本仓库的 GitHub Releases 下载 `lark-agent-bridge-custom-0.7.1-custom.2.tgz`，在下载目录执行下面的命令。从源码构建时，使用 Node.js 22.12+ 和 pnpm 10.33.0，然后运行 `pnpm install --frozen-lockfile` 和 `node dist/cli.js --help`。
+从本仓库的 GitHub Releases 下载 `lark-agent-bridge-custom-0.7.1-custom.3.tgz`，在下载目录执行下面的命令。从源码构建时，使用 Node.js 22.12+ 和 pnpm 10.33.0，然后运行 `pnpm install --frozen-lockfile` 和 `node dist/cli.js --help`。
 
 ```bash
-npm install --global ./lark-agent-bridge-custom-0.7.1-custom.2.tgz
+npm install --global ./lark-agent-bridge-custom-0.7.1-custom.3.tgz
 ```
 
 安装后的终端命令仍是 `lark-channel-bridge`。本版和上游版共用命令名，请勿安装到同一个 npm 全局前缀。
@@ -71,6 +71,28 @@ lark-channel-bridge start --app-id cli_xxx
 ```
 
 Lark 国际版应用可加 `--tenant lark`。
+
+## 升级和旧凭据迁移
+
+从 GitHub Releases 下载新版安装包，使用原安装方式升级。用户目录安装可以执行以下命令。
+
+```bash
+npm install --global --prefix "$HOME/.local" ./lark-agent-bridge-custom-<version>.tgz
+export PATH="$HOME/.local/bin:$PATH"
+npm install --global --prefix "$HOME/.local" @larksuite/cli@1.0.100
+lark-cli --version
+```
+
+新版凭据使用本机随机密钥。旧版用户在升级后为每个现有 profile 执行一次迁移，再用 `start` 更新系统服务的 Node 和 Bridge 路径。
+
+```bash
+lark-channel-bridge secrets migrate --profile claude
+lark-channel-bridge start --profile claude
+```
+
+将 `claude` 换成实际 profile 名称，逐个处理。若主机名已经变化，迁移时加 `--legacy-hostname <原主机名>`。迁移命令验证旧凭据可以解密后才写入新格式，保留 `secrets.enc.v1.bak`，并支持重复执行。无法恢复旧主机名或密钥时，需要用应用凭据重新绑定。
+
+每个 profile 的 `.keystore.key` 和 `secrets.enc` 要一起做私有备份。密钥丢失会导致密文无法解密。备份文件和密钥都应保存在 Git 仓库外。
 
 ## 后台运行
 
@@ -173,7 +195,8 @@ lark-channel-bridge profile export <name> --include-secrets --yes
 | `/invite group` | 允许当前群使用 bot |
 | `/invite all group` | 允许 bot 所在的所有群使用 |
 | `/remove user @某人`, `/remove admin @某人`, `/remove group` | 移除访问控制条目 |
-| `/stop` | 停止当前 run，也可点卡片停止按钮 |
+| `/stop` | 中断当前轮，保留排队消息；当前轮退出后继续处理 |
+| `/stop all` | 中断当前轮，并清空当前会话的排队消息 |
 | `/timeout [N\|off\|default]` | 设置或清除当前会话的 idle watchdog |
 | `/ps` | 列出本机 bridge 进程 |
 | `/exit <id\|#>` | 停止指定 bridge 进程 |

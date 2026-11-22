@@ -3,6 +3,18 @@
 本仓库是个人 fork。以下只记录相对上游的改动，上游历史见
 [zarazhangrui/lark-coding-agent-bridge](https://github.com/zarazhangrui/lark-coding-agent-bridge)。
 
+## 0.7.1-custom.3 — 2026-11-22
+
+- 新凭据使用固定的本机随机密钥，主机名或网络变化后仍可读取。
+- 增加 `secrets migrate --profile <name> --legacy-hostname <previous-hostname>`，支持备份旧密文并迁移至新格式。
+- 凭据写入和迁移使用文件锁，缺失密钥或未知存储版本时保留原数据并报错。
+- 补充用户目录升级飞书 CLI、更新系统服务路径和凭据备份的说明。
+
+- 修复日志遇到循环引用、过深对象或异常 getter 时可能栈溢出的问题。
+- 批次准备失败时保留消息，收到新消息后重试，避免静默丢失或循环重试。
+- 补齐中英文命令表中的 `/stop all`；两种中断行为从 custom.1 起已存在。
+- 新用户可直接安装本版，无需先装 custom.2 或提供旧密钥；迁移仅用于旧版已有凭据。
+
 ## 0.7.1-custom.2 — 2026-11-10
 
 - 原生支持 DeepSeek Harness，使用 `--agent dsh` 创建独立飞书机器人。

@@ -46,6 +46,13 @@ export class PendingQueue {
     return 1;
   }
 
+  /** Keep an unsubmitted failed batch ahead of newer messages; retry on next input. */
+  restore(scope: string, batch: NormalizedMessage[]): void {
+    const entry = this.map.get(scope);
+    if (entry?.timer) clearTimeout(entry.timer);
+    this.map.set(scope, { messages: [...batch, ...(entry?.messages ?? [])] });
+  }
+
   cancel(scope: string): NormalizedMessage[] {
     const entry = this.map.get(scope);
     if (!entry) return [];

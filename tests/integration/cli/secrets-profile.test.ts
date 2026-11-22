@@ -95,7 +95,7 @@ describe('profile-aware secrets commands', () => {
     expect(warnings).toEqual([]);
   });
 
-  it('caches the derived keystore key within one secrets process', async () => {
+  it('does not derive hostname keys for persistent-key stores', async () => {
     const root = await makeRoot();
     await writeProfiles(root, 'claude', ['claude']);
     const appPaths = resolveAppPaths({ rootDir: root, profile: 'claude' });
@@ -106,7 +106,7 @@ describe('profile-aware secrets commands', () => {
     await expect(getSecret(secretKeyForApp('cli_one'), appPaths)).resolves.toBe('one');
     await expect(getSecret(secretKeyForApp('cli_two'), appPaths)).resolves.toBe('two');
 
-    expect(keystoreDerivedKeyCacheSize()).toBe(1);
+    expect(keystoreDerivedKeyCacheSize()).toBe(0);
   });
 });
 

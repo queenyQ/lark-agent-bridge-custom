@@ -6,6 +6,7 @@ import { runKillCli, runPs } from './commands/ps';
 import {
   runSecretsGet,
   runSecretsList,
+  runSecretsMigrate,
   runSecretsRemove,
   runSecretsSet,
 } from './commands/secrets';
@@ -225,6 +226,15 @@ program
 const secrets = program
   .command('secrets')
   .description('Manage the bridge\'s encrypted secret keystore (~/.lark-channel/secrets.enc)');
+
+secrets
+  .command('migrate')
+  .description('Migrate the selected profile to a persistent local keystore key')
+  .option('--profile <name>', 'profile name (defaults to active profile)')
+  .option('--legacy-hostname <name>', 'hostname used to encrypt a legacy keystore')
+  .action(async (opts: { profile?: string; legacyHostname?: string }) => {
+    await runSecretsMigrate(opts);
+  });
 
 secrets
   .command('get')
