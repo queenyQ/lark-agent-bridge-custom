@@ -38,10 +38,10 @@ For a product walkthrough, see the [Feishu document](https://larkcommunity.feish
 
 ## Install
 
-Download the matching `lark-agent-bridge-custom-0.7.1-custom.2.tgz` from this repository’s GitHub Releases and run the following in the download directory. To build from source, use Node.js 22.12+ and pnpm 10.33.0, then run `pnpm install --frozen-lockfile` and `node dist/cli.js --help`.
+Download the matching `lark-agent-bridge-custom-1.1.0.tgz` from this repository’s GitHub Releases and run the following in the download directory. To build from source, use Node.js 22.12+ and pnpm 10.33.0, then run `pnpm install --frozen-lockfile` and `node dist/cli.js --help`.
 
 ```bash
-npm install --global ./lark-agent-bridge-custom-0.7.1-custom.2.tgz
+npm install --global ./lark-agent-bridge-custom-1.1.0.tgz
 ```
 
 The installed command is still `lark-channel-bridge`. The custom and upstream packages share that command, so use separate npm prefixes if you need both.

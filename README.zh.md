@@ -38,10 +38,10 @@
 
 ## 安装
 
-从本仓库的 GitHub Releases 下载 `lark-agent-bridge-custom-0.7.1-custom.2.tgz`，在下载目录执行下面的命令。从源码构建时，使用 Node.js 22.12+ 和 pnpm 10.33.0，然后运行 `pnpm install --frozen-lockfile` 和 `node dist/cli.js --help`。
+从本仓库的 GitHub Releases 下载 `lark-agent-bridge-custom-1.1.0.tgz`，在下载目录执行下面的命令。从源码构建时，使用 Node.js 22.12+ 和 pnpm 10.33.0，然后运行 `pnpm install --frozen-lockfile` 和 `node dist/cli.js --help`。
 
 ```bash
-npm install --global ./lark-agent-bridge-custom-0.7.1-custom.2.tgz
+npm install --global ./lark-agent-bridge-custom-1.1.0.tgz
 ```
 
 安装后的终端命令仍是 `lark-channel-bridge`。本版和上游版共用命令名，请勿安装到同一个 npm 全局前缀。
