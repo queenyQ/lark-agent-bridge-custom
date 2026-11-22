@@ -3,7 +3,7 @@
 本仓库是个人 fork。以下只记录相对上游的改动，上游历史见
 [zarazhangrui/lark-coding-agent-bridge](https://github.com/zarazhangrui/lark-coding-agent-bridge)。
 
-## 0.7.1-custom.1 — 2026-10-23
+## 1.0.0 — 2026-10-23
 
 基于上游 `0.7.1`（commit `5898681`）。
 
